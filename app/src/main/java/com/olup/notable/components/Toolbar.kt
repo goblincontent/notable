@@ -17,6 +17,7 @@ import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.olup.notable.WebViewActivity
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
     return when (mode) {
@@ -243,6 +244,22 @@ fun Toolbar(
                     },
                     iconId = R.drawable.send,
                     contentDescription = "Send to AI"
+                )
+                
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
+                
+                ToolbarButton(
+                    onSelect = {
+                        val intent = WebViewActivity.createIntent(context)
+                        context.startActivity(intent)
+                    },
+                    iconId = R.drawable.web
+                    contentDescription = "Connect to Web"
                 )
 
                 Box(

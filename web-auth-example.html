@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notable Web Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Notable Web Authentication</h1>
+                <p class="text-gray-600 mt-2">Connect your Android app to the web</p>
+            </div>
+
+            <div id="loading" class="text-center py-4">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
+                <p class="mt-2 text-gray-600">Waiting for Android connection...</p>
+            </div>
+
+            <div id="auth-success" class="hidden">
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                    <p class="font-bold">Connected!</p>
+                    <p>Your Android app is now connected to the web.</p>
+                </div>
+                
+                <div class="mt-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Your Anonymous ID:</h2>
+                    <p id="anonymous-id" class="mt-1 text-sm text-gray-600 bg-gray-100 p-2 rounded"></p>
+                </div>
+
+                <div class="mt-6">
+                    <h2 class="text-lg font-semibold text-gray-800">Your Notes:</h2>
+                    <div id="notes-container" class="mt-2 space-y-2">
+                        <p class="text-gray-600 italic">No notes available yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manual-connect" class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">Manual Connection</h2>
+                <p class="text-sm text-gray-600 mb-4">If automatic connection doesn't work, you can manually enter your anonymous ID:</p>
+                
+                <div class="flex">
+                    <input type="text" id="manual-id" placeholder="Enter anonymous ID" 
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="connect-button" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-md transition duration-200">
+                        Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if running in Android WebView
+        const isAndroidWebView = window.AndroidAuth !== undefined;
+        let anonymousId = null;
+
+        // Function to handle successful authentication
+        function handleAuthSuccess(id) {
+            anonymousId = id;
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('auth-success').classList.remove('hidden');
+            document.getElementById('anonymous-id').textContent = id;
+            
+            // If in Android WebView, send success back to Android
+            if (isAndroidWebView && window.AndroidAuth) {
+                // Simulate getting a token
+                const token = `auth_token_${Date.now()}_${id}`;
+                window.AndroidAuth.onAuthSuccess(token);
+            }
+
+            // Fetch notes from Convex (simulated)
+            fetchNotes(id);
+        }
+
+        // Function to fetch notes from Convex
+        async function fetchNotes(id) {
+            try {
+                // This would be a real API call in production
+                // const response = await fetch(`https://doting-blackbird-724.convex.site/api/chat/getUserThreads?userId=${id}`);
+                // const data = await response.json();
+                
+                // For demo, we'll simulate some notes
+                const simulatedNotes = [
+                    { id: 1, title: "Meeting Notes", timestamp: Date.now() - 86400000 },
+                    { id: 2, title: "Shopping List", timestamp: Date.now() - 43200000 },
+                    { id: 3, title: "Project Ideas", timestamp: Date.now() - 3600000 }
+                ];
+                
+                const notesContainer = document.getElementById('notes-container');
+                notesContainer.innerHTML = '';
+                
+                simulatedNotes.forEach(note => {
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition duration-200';
+                    
+                    const date = new Date(note.timestamp);
+                    noteElement.innerHTML = `
+                        <h3 class="font-medium text-gray-800">${note.title}</h3>
+                        <p class="text-xs text-gray-500">${date.toLocaleString()}</p>
+                    `;
+                    
+                    notesContainer.appendChild(noteElement);
+                });
+            } catch (error) {
+                console.error('Error fetching notes:', error);
+                document.getElementById('notes-container').innerHTML = 
+                    '<p class="text-red-500">Error loading notes. Please try again later.</p>';
+            }
+        }
+
+        // If in Android WebView, get anonymous ID
+        if (isAndroidWebView) {
+            try {
+                anonymousId = window.AndroidAuth.getAnonymousId();
+                if (anonymousId) {
+                    handleAuthSuccess(anonymousId);
+                }
+            } catch (e) {
+                console.error('Error getting anonymous ID from Android:', e);
+            }
+        } else {
+            // Not in Android WebView, show manual connection option
+            document.getElementById('loading').innerHTML = 
+                '<p class="text-yellow-600">Not connected to Android app. Please use manual connection below.</p>';
+        }
+
+        // Manual connection button
+        document.getElementById('connect-button').addEventListener('click', function() {
+            const manualId = document.getElementById('manual-id').value.trim();
+            if (manualId) {
+                handleAuthSuccess(manualId);
+            } else {
+                alert('Please enter a valid anonymous ID');
+            }
+        });
+
+        // URL parameter check (for direct links)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlId = urlParams.get('id');
+        if (urlId && !anonymousId) {
+            handleAuthSuccess(urlId);
+        }
+    </script>
+</body>
+</html>

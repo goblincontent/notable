@@ -140,6 +140,22 @@ fun ToolbarMenu(
                         onClose()
                     }
             ) { Text("Page Settings") }
+            
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(0.5.dp)
+                    .background(Color.Black)
+            )
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        val intent = WebViewActivity.createIntent(context)
+                        context.startActivity(intent)
+                        onClose()
+                    }
+            ) { Text("Connect to Web") }
 
             /*Box(
                 Modifier

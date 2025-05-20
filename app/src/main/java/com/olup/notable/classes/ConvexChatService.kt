@@ -1,17 +1,7 @@
-package com.olup.notable
+package com.olup.notable.classes
 
+import android.content.Context
 import android.util.Log
-import com.olup.notable.classes.AnonymousUserManager
-import com.olup.notable.classes.AuthInterceptor
-import com.olup.notable.classes.ConvexApiClient
-import com.olup.notable.classes.ContinueThreadRequest
-import com.olup.notable.classes.ContinueThreadResponse
-import com.olup.notable.classes.CreateThreadRequest
-import com.olup.notable.classes.CreateThreadResponse
-import com.olup.notable.classes.GetThreadMessagesResponse
-import com.olup.notable.classes.GetUserThreadsResponse
-import com.olup.notable.classes.Message
-import com.olup.notable.classes.Thread
 import com.olup.notable.db.ChatMessageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,9 +14,9 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class LambdaService(private val context: android.content.Context) {
+class ConvexChatService(private val context: Context) {
     companion object {
-        private const val TAG = "LambdaService"
+        private const val TAG = "ConvexChatService"
     }
 
     private val chatRepository: ChatMessageRepository = ChatMessageRepository(context)
@@ -45,9 +35,9 @@ class LambdaService(private val context: android.content.Context) {
             val deviceId = android.os.Build.MODEL
             
             val result = suspendCancellableCoroutine<Boolean> { continuation ->
-                apiService.authenticateAnonymous(com.olup.notable.classes.AnonymousAuthRequest(anonymousId, deviceId))
-                    .enqueue(object : Callback<com.olup.notable.classes.AuthResponse> {
-                        override fun onResponse(call: Call<com.olup.notable.classes.AuthResponse>, response: Response<com.olup.notable.classes.AuthResponse>) {
+                apiService.authenticateAnonymous(AnonymousAuthRequest(anonymousId, deviceId))
+                    .enqueue(object : Callback<AuthResponse> {
+                        override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
                             val authResponse = response.body()
                             if (authResponse?.success == true && authResponse.token != null) {
                                 authInterceptor?.setToken(authResponse.token)
@@ -57,7 +47,7 @@ class LambdaService(private val context: android.content.Context) {
                             }
                         }
                         
-                        override fun onFailure(call: Call<com.olup.notable.classes.AuthResponse>, t: Throwable) {
+                        override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
                             Log.e(TAG, "Authentication failed", t)
                             continuation.resume(false)
                         }
@@ -72,6 +62,31 @@ class LambdaService(private val context: android.content.Context) {
         }
     }
 
+    suspend fun getCompletion(pageId: String, prompt: String): String = withContext(Dispatchers.IO) {
+        try {
+            // Initialize if not already done
+            if (!isInitialized && !initialize()) {
+                return@withContext "Error: Failed to initialize chat service"
+            }
+
+            // Add user message to local repository
+            chatRepository.addMessage(pageId, "user", prompt)
+            
+            val threadId = threadIdMap[pageId]
+            
+            if (threadId == null) {
+                // Create a new thread
+                return@withContext createNewThread(pageId, prompt)
+            } else {
+                // Continue existing thread
+                return@withContext continueThread(pageId, threadId, prompt)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in getCompletion", e)
+            return@withContext "Error: ${e.message}"
+        }
+    }
+    
     private suspend fun createNewThread(pageId: String, prompt: String): String {
         return suspendCancellableCoroutine { continuation ->
             val anonymousId = anonymousUserManager.getAnonymousId()
@@ -128,34 +143,6 @@ class LambdaService(private val context: android.content.Context) {
                         continuation.resume("Error: ${t.message}")
                     }
                 })
-        }
-    }
-
-    suspend fun getCompletion(pageId: String, prompt: String): String = withContext(Dispatchers.IO) {
-        try {
-            // Initialize if not already done
-            if (!isInitialized && !initialize()) {
-                return@withContext "Error: Failed to initialize chat service"
-            }
-
-            // Initialize system message if needed (keeping this for compatibility)
-            chatRepository.initializeSystemMessage(pageId)
-
-            // Add user message to local repository
-            chatRepository.addMessage(pageId, "user", prompt)
-            
-            val threadId = threadIdMap[pageId]
-            
-            if (threadId == null) {
-                // Create a new thread
-                return@withContext createNewThread(pageId, prompt)
-            } else {
-                // Continue existing thread
-                return@withContext continueThread(pageId, threadId, prompt)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in getCompletion", e)
-            return@withContext "Error: ${e.message}"
         }
     }
     

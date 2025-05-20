@@ -29,6 +29,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false"
+            android:label="Web Authentication"
+            android:theme="@style/Theme.Inka">
+        </activity>
         <provider
             android:name="com.olup.notable.Provider"
             android:authorities="com.olup.notable.provider"

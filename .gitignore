@@ -14,5 +14,5 @@
 .cxx
 local.properties
 /.idea
-aws/calendar/package.zip
-/aws/calendar/package
+aws/*
+
