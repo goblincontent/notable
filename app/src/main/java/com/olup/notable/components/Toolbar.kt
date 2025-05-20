@@ -258,7 +258,7 @@ fun Toolbar(
                         val intent = WebViewActivity.createIntent(context)
                         context.startActivity(intent)
                     },
-                    iconId = R.drawable.web
+                    iconId = R.drawable.login,
                     contentDescription = "Connect to Web"
                 )
 
@@ -332,6 +332,7 @@ fun Toolbar(
                     .width(0.5.dp)
                     .background(Color.Black)
             )
+            
             ToolbarButton(
                 onSelect = {
                     scope.launch {
@@ -353,6 +354,16 @@ fun Toolbar(
                 iconId = R.drawable.send,
                 contentDescription = "Send to AI"
             )
+
+            ToolbarButton(
+                onSelect = {
+                    val intent = WebViewActivity.createIntent(context)
+                    context.startActivity(intent)
+                },
+                iconId = R.drawable.login,
+                contentDescription = "Connect to Web"
+            )
+
         }
     }
 }
