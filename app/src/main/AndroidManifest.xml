@@ -33,7 +33,7 @@
             android:name=".WebViewActivity"
             android:exported="false"
             android:label="Web Authentication"
-            android:theme="@style/Theme.Inka">
+            android:theme="@android:style/Theme.DeviceDefault.Light">
         </activity>
         <provider
             android:name="com.olup.notable.Provider"
