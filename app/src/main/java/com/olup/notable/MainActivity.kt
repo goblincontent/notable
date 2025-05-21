@@ -2,7 +2,6 @@ package com.olup.notable
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import io.shipbook.shipbooksdk.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.olup.notable.ui.theme.InkaTheme
 import com.onyx.android.sdk.api.device.epd.EpdController
-import io.shipbook.shipbooksdk.ShipBook
 import kotlinx.coroutines.launch
 
 
@@ -31,11 +29,6 @@ var TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        ShipBook.start(this.application, "6778992fc8927e001157b0d7",
-            "1a3e1ee98967d4752478ba7ad7e4d80e");
-
-        Log.i(TAG, "WizardWriter started")
 
 
         if(SCREEN_WIDTH == 0){
