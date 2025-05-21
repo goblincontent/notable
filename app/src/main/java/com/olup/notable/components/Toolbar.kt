@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -318,52 +317,62 @@ fun Toolbar(
             )
         }
     } else {
-        Row(
-            modifier = Modifier.height(37.dp)
-        ) {
-            ToolbarButton(
-                onSelect = { state.isToolbarOpen = true },
-                iconId = PresentlyUsedToolIcon(state.mode, state.pen),
-                contentDescription = "open toolbar"
-            )
+        Column {
+            // Add a black divider line at the top of the collapsed toolbar
             Box(
                 Modifier
-                    .fillMaxHeight()
-                    .width(0.5.dp)
+                    .fillMaxWidth()
+                    .height(1.dp)
                     .background(Color.Black)
             )
             
-            ToolbarButton(
-                onSelect = {
-                    scope.launch {
-                        TextRecognizer.recognizeText(
-                            scope = scope,
-                            pageView = state.pageView,
-                            onStart = {
-                                DrawCanvas.startLoading.emit(Unit)
-                            },
-                            onComplete = {
-                                DrawCanvas.stopLoading.emit(Unit)
-                            },
-                            onTextRecognized = { text ->
-                                DrawCanvas.drawText.emit(text)
-                            }
-                        )
-                    }
-                },
-                iconId = R.drawable.send,
-                contentDescription = "Send to AI"
-            )
+            // The toolbar row with buttons
+            Row(
+                modifier = Modifier.height(37.dp)
+            ) {
+                ToolbarButton(
+                    onSelect = { state.isToolbarOpen = true },
+                    iconId = PresentlyUsedToolIcon(state.mode, state.pen),
+                    contentDescription = "open toolbar"
+                )
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
+                
+                ToolbarButton(
+                    onSelect = {
+                        scope.launch {
+                            TextRecognizer.recognizeText(
+                                scope = scope,
+                                pageView = state.pageView,
+                                onStart = {
+                                    DrawCanvas.startLoading.emit(Unit)
+                                },
+                                onComplete = {
+                                    DrawCanvas.stopLoading.emit(Unit)
+                                },
+                                onTextRecognized = { text ->
+                                    DrawCanvas.drawText.emit(text)
+                                }
+                            )
+                        }
+                    },
+                    iconId = R.drawable.send,
+                    contentDescription = "Send to AI"
+                )
 
-            ToolbarButton(
-                onSelect = {
-                    val intent = WebViewActivity.createIntent(context)
-                    context.startActivity(intent)
-                },
-                iconId = R.drawable.login,
-                contentDescription = "Connect to Web"
-            )
-
+                ToolbarButton(
+                    onSelect = {
+                        val intent = WebViewActivity.createIntent(context)
+                        context.startActivity(intent)
+                    },
+                    iconId = R.drawable.login,
+                    contentDescription = "Connect to Web"
+                )
+            }
         }
     }
 }

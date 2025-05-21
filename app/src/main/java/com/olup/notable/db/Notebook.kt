@@ -1,7 +1,6 @@
 package com.olup.notable.db
 
 import android.content.Context
-import io.shipbook.shipbooksdk.Log
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.olup.notable.TAG
@@ -110,7 +109,6 @@ class BookRepository(context: Context) {
             openPageId = if (notebook.openPageId == pageId) null else notebook.openPageId
         )
         db.update(updatedNotebook)
-        Log.i(TAG, "Cleaned ${id} ${pageId}")
     }
 
     fun changeePageIndex(id: String, pageId: String, index: Int) {

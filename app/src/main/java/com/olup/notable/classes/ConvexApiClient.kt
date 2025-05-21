@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ConvexApiClient {
-    private const val BASE_URL = "https://doting-blackbird-724.convex.site/"
+    private const val BASE_URL = "https://woozy-mongoose-203.convex.site/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
