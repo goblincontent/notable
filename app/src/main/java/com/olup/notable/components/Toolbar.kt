@@ -317,7 +317,10 @@ fun Toolbar(
             )
         }
     } else {
-        Column {
+        // Use a Column with background to prevent text overlap
+        Column(
+            modifier = Modifier.background(Color.White)
+        ) {
             // Add a black divider line at the top of the collapsed toolbar
             Box(
                 Modifier
@@ -373,6 +376,14 @@ fun Toolbar(
                     contentDescription = "Connect to Web"
                 )
             }
+            
+            // Add a black divider line at the bottom of the collapsed toolbar
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color.Black)
+            )
         }
     }
 }

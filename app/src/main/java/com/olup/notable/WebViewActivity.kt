@@ -188,7 +188,7 @@ class WebViewActivity : Activity() {
         
         @JavascriptInterface
         fun onAuthSuccess(token: String) {
-            Log.d(TAG, "Auth success received from web with token")
+            Log.d(TAG, "Auth success received from web with token $token")
             val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
             prefs.edit().putString("auth_token", token).apply()
             
