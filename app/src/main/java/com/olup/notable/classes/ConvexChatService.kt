@@ -22,6 +22,7 @@ class ConvexChatService(private val context: Context) {
     private val chatRepository: ChatMessageRepository = ChatMessageRepository(context)
     private val anonymousUserManager = AnonymousUserManager(context)
     private val authManager = AuthManager(context)
+    private val secureTokenStorage = SecureTokenStorage(context)
     private val apiService = ConvexApiClient.apiService
     private val authInterceptor = (ConvexApiClient.httpClient.interceptors.find { it is AuthInterceptor } as? AuthInterceptor)
     
@@ -34,12 +35,23 @@ class ConvexChatService(private val context: Context) {
         if (isInitialized) return@withContext true
         
         try {
-            // Get the auth token directly
-            val token = authManager.getAuthToken()
+            // First check if we have a valid stored token
+            if (secureTokenStorage.hasValidToken()) {
+                val storedToken = secureTokenStorage.retrieveToken()
+                if (storedToken != null) {
+                    Log.d(TAG, "Using stored secure token")
+                    authInterceptor?.setToken(storedToken)
+                    isInitialized = true
+                    return@withContext true
+                }
+            }
             
-            // Check if we have a valid user token
-            if (!token.isNullOrEmpty() && token.startsWith("user_")) {
-                Log.d(TAG, "Using authenticated token: $token")
+            // Check if we have a token from auth manager
+            val token = authManager.getAuthToken()
+            if (!token.isNullOrEmpty()) {
+                Log.d(TAG, "Using auth manager token")
+                // Store the token securely for future use
+                secureTokenStorage.storeToken(token)
                 authInterceptor?.setToken(token)
                 isInitialized = true
                 return@withContext true
@@ -57,6 +69,8 @@ class ConvexChatService(private val context: Context) {
                             val authResponse = response.body()
                             if (authResponse?.success == true && authResponse.token != null) {
                                 Log.d(TAG, "Anonymous authentication successful")
+                                // Store the anonymous token securely
+                                secureTokenStorage.storeToken(authResponse.token)
                                 authInterceptor?.setToken(authResponse.token)
                                 continuation.resume(true)
                             } else {
@@ -78,6 +92,15 @@ class ConvexChatService(private val context: Context) {
             Log.e(TAG, "Error initializing ConvexChatService", e)
             return@withContext false
         }
+    }
+
+    /**
+     * Clear stored authentication token (useful for logout)
+     */
+    fun clearAuthToken() {
+        secureTokenStorage.clearToken()
+        isInitialized = false
+        Log.d(TAG, "Authentication token cleared")
     }
 
     // Helper method to save threadId to SharedPreferences
@@ -102,10 +125,9 @@ class ConvexChatService(private val context: Context) {
                 return@withContext "Error: Failed to initialize chat service"
             }
 
-            // Get the auth token directly
-            val authToken = authManager.getAuthToken()
-            val isValidUserToken = !authToken.isNullOrEmpty() && authToken.startsWith("user_")
-            Log.d(TAG, "Authentication status: token=$authToken, isValidUserToken=$isValidUserToken")
+            // Check if we have a valid token (either from secure storage or auth manager)
+            val hasValidToken = secureTokenStorage.hasValidToken() || !authManager.getAuthToken().isNullOrEmpty()
+            Log.d(TAG, "Authentication status: hasValidToken=$hasValidToken")
 
             // Add user message to local repository
             chatRepository.addMessage(pageId, "user", prompt)
